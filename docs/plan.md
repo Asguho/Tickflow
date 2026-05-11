@@ -4,17 +4,17 @@ Last updated: 2026-05-11
 
 ## 1. Current Starting Point
 
-The repository currently contains project idea/context files and durable planning documents. The Android application has not yet been scaffolded.
+The repository now contains a buildable single-module Android application plus durable planning documents.
 
-Current known files:
+Current implementation baseline:
 
-- `IDEA.md`: concise product idea.
-- `context/context1.md`: expanded product and architecture context.
-- `context/context2.md`: currently empty.
-- `docs/prompt.md`: single source of truth.
-- `docs/plan.md`: execution plan.
-- `docs/constraints.md`: engineering constraints.
-- `docs/status.md`: current project status.
+- Gradle Kotlin DSL Android project with `app` module and Gradle wrapper.
+- Kotlin, Jetpack Compose, Material 3, Navigation Compose, Hilt, Room, DataStore, WorkManager, and tests configured.
+- Domain time engine with unit tests for sessions, day slicing, carry-over, prediction, reducer behavior, and correction suggestions.
+- Room/DataStore persistence with repository tests for work-session CRUD, active-session recovery, and overlap prevention.
+- Foreground tracking service, notification factory, Wi-Fi connectivity adapter, process-level presence coordinator, reboot recovery worker, and scheduled rollover worker.
+- Compose setup, home, session list/editor, and settings flows.
+- Remaining release work is tracked in `docs/status.md`.
 
 ## 2. Milestone Overview
 

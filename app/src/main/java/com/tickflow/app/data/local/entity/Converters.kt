@@ -1,0 +1,26 @@
+package com.tickflow.app.data.local.entity
+
+import androidx.room.TypeConverter
+import com.tickflow.app.core.model.SessionSource
+import java.time.Instant
+import java.time.LocalDate
+
+class Converters {
+    @TypeConverter
+    fun instantToEpochMilli(value: Instant?): Long? = value?.toEpochMilli()
+
+    @TypeConverter
+    fun epochMilliToInstant(value: Long?): Instant? = value?.let(Instant::ofEpochMilli)
+
+    @TypeConverter
+    fun localDateToString(value: LocalDate?): String? = value?.toString()
+
+    @TypeConverter
+    fun stringToLocalDate(value: String?): LocalDate? = value?.let(LocalDate::parse)
+
+    @TypeConverter
+    fun sourceToString(value: SessionSource): String = value.name
+
+    @TypeConverter
+    fun stringToSource(value: String): SessionSource = SessionSource.valueOf(value)
+}

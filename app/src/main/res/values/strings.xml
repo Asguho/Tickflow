@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Tickflow</string>
+    <string name="tracking_channel_name">Active work tracking</string>
+    <string name="tracking_channel_description">Shows active Tickflow work tracking status.</string>
+</resources>
