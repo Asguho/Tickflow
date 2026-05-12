@@ -1,0 +1,148 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "9b4edb4349597e87e8531ff4b6849396",
+    "entities": [
+      {
+        "tableName": "work_sessions",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `start` INTEGER NOT NULL, `end` INTEGER, `source` TEXT NOT NULL, `confidence` INTEGER NOT NULL, `corrected` INTEGER NOT NULL, `editedAt` INTEGER, `note` TEXT)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "start",
+            "columnName": "start",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "end",
+            "columnName": "end",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "source",
+            "columnName": "source",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "confidence",
+            "columnName": "confidence",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "corrected",
+            "columnName": "corrected",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "editedAt",
+            "columnName": "editedAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "note",
+            "columnName": "note",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_work_sessions_start",
+            "unique": false,
+            "columnNames": [
+              "start"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_work_sessions_start` ON `${TABLE_NAME}` (`start`)"
+          },
+          {
+            "name": "index_work_sessions_end",
+            "unique": false,
+            "columnNames": [
+              "end"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_work_sessions_end` ON `${TABLE_NAME}` (`end`)"
+          },
+          {
+            "name": "index_work_sessions_end_start",
+            "unique": false,
+            "columnNames": [
+              "end",
+              "start"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_work_sessions_end_start` ON `${TABLE_NAME}` (`end`, `start`)"
+          }
+        ]
+      },
+      {
+        "tableName": "day_balances",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`date` TEXT NOT NULL, `targetMinutes` INTEGER NOT NULL, `actualMinutes` INTEGER NOT NULL, `carryInMinutes` INTEGER NOT NULL, `isWorkday` INTEGER NOT NULL, `manuallyAppliedOnNonWorkday` INTEGER NOT NULL, PRIMARY KEY(`date`))",
+        "fields": [
+          {
+            "fieldPath": "date",
+            "columnName": "date",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "targetMinutes",
+            "columnName": "targetMinutes",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "actualMinutes",
+            "columnName": "actualMinutes",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "carryInMinutes",
+            "columnName": "carryInMinutes",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isWorkday",
+            "columnName": "isWorkday",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "manuallyAppliedOnNonWorkday",
+            "columnName": "manuallyAppliedOnNonWorkday",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "date"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '9b4edb4349597e87e8531ff4b6849396')"
+    ]
+  }
+}

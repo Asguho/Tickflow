@@ -7,6 +7,7 @@ Last updated: 2026-05-11
 | Area | Constraint |
 | --- | --- |
 | Platform | Android native app. No cross-platform framework for MVP. |
+| Android SDK | Compile/target SDK 36, minimum SDK 26 for the current scaffold. |
 | Language | Kotlin only for production app code. |
 | UI | Jetpack Compose only. No new XML view screens. |
 | Architecture | MVVM with unidirectional data flow. |
