@@ -5,7 +5,10 @@ import javax.inject.Inject
 
 class CalculateCarryOverUseCase @Inject constructor() {
     operator fun invoke(previousCarryInMinutes: Int, previousDay: DayBalance): Int {
-        if (!previousDay.isWorkday && !previousDay.manuallyAppliedOnNonWorkday) {
+        if (!previousDay.countsAsWorkday) {
+            return previousCarryInMinutes
+        }
+        if (!previousDay.hasTimeRecord) {
             return previousCarryInMinutes
         }
         return previousDay.creditDeficitMinutes

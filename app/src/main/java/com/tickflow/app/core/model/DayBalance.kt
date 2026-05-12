@@ -9,16 +9,19 @@ data class DayBalance(
     val carryInMinutes: Int,
     val isWorkday: Boolean,
     val manuallyAppliedOnNonWorkday: Boolean = false,
+    val hasTimeRecord: Boolean = actualMinutes > 0,
 ) {
+    val countsAsWorkday: Boolean = isWorkday || manuallyAppliedOnNonWorkday || hasTimeRecord
+
     val effectiveTargetMinutes: Int =
-        if (isWorkday || manuallyAppliedOnNonWorkday) {
+        if (countsAsWorkday) {
             (targetMinutes - carryInMinutes).coerceAtLeast(0)
         } else {
             0
         }
 
     val creditDeficitMinutes: Int =
-        if (isWorkday || manuallyAppliedOnNonWorkday) {
+        if (countsAsWorkday) {
             actualMinutes - effectiveTargetMinutes
         } else {
             0

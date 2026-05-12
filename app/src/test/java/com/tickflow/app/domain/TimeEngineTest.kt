@@ -101,6 +101,105 @@ class TimeEngineTest {
     }
 
     @Test
+    fun carryOverIgnoresWorkdayWithoutTimeRecord() {
+        val day = com.tickflow.app.core.model.DayBalance(
+            date = LocalDate.parse("2026-05-11"),
+            targetMinutes = 480,
+            actualMinutes = 0,
+            carryInMinutes = 0,
+            isWorkday = true,
+        )
+
+        val carry = CalculateCarryOverUseCase()(0, day)
+
+        assertEquals(0, carry)
+    }
+
+    @Test
+    fun carryOverKeepsExistingDeficitAcrossWorkdayWithoutTimeRecord() {
+        val day = com.tickflow.app.core.model.DayBalance(
+            date = LocalDate.parse("2026-05-11"),
+            targetMinutes = 480,
+            actualMinutes = 0,
+            carryInMinutes = -120,
+            isWorkday = true,
+        )
+
+        val carry = CalculateCarryOverUseCase()(-120, day)
+
+        assertEquals(-120, carry)
+    }
+
+    @Test
+    fun trackedTimeOnUnscheduledDayCountsAsWorkday() {
+        val session = WorkSession(
+            start = Instant.parse("2026-05-16T08:00:00Z"),
+            end = Instant.parse("2026-05-16T12:00:00Z"),
+            source = SessionSource.Manual,
+        )
+
+        val day = balance(
+            date = LocalDate.parse("2026-05-16"),
+            sessions = listOf(session),
+            schedule = WorkSchedule(
+                workdays = setOf(DayOfWeek.MONDAY, DayOfWeek.TUESDAY),
+                dailyTargetMinutes = 480,
+            ),
+            carryInMinutes = 0,
+            zoneId = ZoneId.of("UTC"),
+            now = Instant.parse("2026-05-16T12:00:00Z"),
+        )
+        val carry = CalculateCarryOverUseCase()(0, day)
+
+        assertTrue(day.hasTimeRecord)
+        assertTrue(day.countsAsWorkday)
+        assertEquals(480, day.effectiveTargetMinutes)
+        assertEquals(-240, day.creditDeficitMinutes)
+        assertEquals(-240, carry)
+    }
+
+    @Test
+    fun unscheduledDayWithoutTrackedTimeDoesNotConsumeCarryOver() {
+        val day = balance(
+            date = LocalDate.parse("2026-05-16"),
+            sessions = emptyList(),
+            schedule = WorkSchedule(
+                workdays = setOf(DayOfWeek.MONDAY, DayOfWeek.TUESDAY),
+                dailyTargetMinutes = 480,
+            ),
+            carryInMinutes = -120,
+            zoneId = ZoneId.of("UTC"),
+            now = Instant.parse("2026-05-16T12:00:00Z"),
+        )
+        val carry = CalculateCarryOverUseCase()(-120, day)
+
+        assertEquals(0, day.effectiveTargetMinutes)
+        assertEquals(0, day.creditDeficitMinutes)
+        assertEquals(-120, carry)
+    }
+
+    @Test
+    fun subMinuteSessionStillMarksDayAsHavingTimeRecord() {
+        val session = WorkSession(
+            start = Instant.parse("2026-05-11T08:00:00Z"),
+            end = Instant.parse("2026-05-11T08:00:30Z"),
+            source = SessionSource.Manual,
+        )
+
+        val day = balance(
+            date = LocalDate.parse("2026-05-11"),
+            sessions = listOf(session),
+            schedule = WorkSchedule(workdays = setOf(DayOfWeek.MONDAY), dailyTargetMinutes = 480),
+            carryInMinutes = 0,
+            zoneId = ZoneId.of("UTC"),
+            now = Instant.parse("2026-05-11T08:00:30Z"),
+        )
+
+        assertEquals(0, day.actualMinutes)
+        assertTrue(day.hasTimeRecord)
+    }
+
+    @Test
     fun predictiveLeaveTimeAddsRemainingMinutesWhenTracking() {
         val now = Instant.parse("2026-05-11T12:00:00Z")
         val day = com.tickflow.app.core.model.DayBalance(

@@ -20,9 +20,15 @@ class CalculateDayBalanceUseCase @Inject constructor(
         now: Instant,
         manuallyAppliedOnNonWorkday: Boolean = false,
     ): DayBalance {
-        val actualMinutes = sliceSessionsByDay(sessions, zoneId, now)
+        val dayStart = date.atStartOfDay(zoneId).toInstant()
+        val dayEnd = date.plusDays(1).atStartOfDay(zoneId).toInstant()
+        val hasTimeRecord = sessions.any { session ->
+            val sessionEnd = session.end ?: now
+            session.start < dayEnd && sessionEnd > dayStart && sessionEnd > session.start
+        }
+        val daySlices = sliceSessionsByDay(sessions, zoneId, now)
             .filter { it.date == date }
-            .sumOf { it.minutes }
+        val actualMinutes = daySlices.sumOf { it.minutes }
 
         return DayBalance(
             date = date,
@@ -31,6 +37,7 @@ class CalculateDayBalanceUseCase @Inject constructor(
             carryInMinutes = if (schedule.carryOverEnabled) carryInMinutes else 0,
             isWorkday = schedule.isWorkday(date),
             manuallyAppliedOnNonWorkday = manuallyAppliedOnNonWorkday,
+            hasTimeRecord = hasTimeRecord,
         )
     }
 }
