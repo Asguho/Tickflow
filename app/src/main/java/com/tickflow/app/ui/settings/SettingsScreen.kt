@@ -190,7 +190,6 @@ fun SettingsScreen(
             SectionCard(
                 title = "Behavior",
                 icon = Icons.Outlined.Tune,
-                contentPadding = PaddingValues(top = 4.dp, bottom = 4.dp),
             ) {
                 SettingsSwitchRow(
                     icon = Icons.Outlined.Notifications,
