@@ -8,6 +8,8 @@ plugins {
     alias(libs.plugins.hilt)
 }
 
+val appVersionName = "0.1.0"
+
 android {
     namespace = "com.tickflow.app"
     compileSdk = 36
@@ -17,7 +19,7 @@ android {
         minSdk = 26
         targetSdk = 36
         versionCode = 1
-        versionName = "0.1.0"
+        versionName = appVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -82,6 +84,14 @@ android {
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
+        }
+    }
+}
+
+androidComponents {
+    onVariants(selector().withBuildType("release")) { variant ->
+        variant.outputs.forEach { output ->
+            output.outputFileName.set("Tickflow-$appVersionName.apk")
         }
     }
 }

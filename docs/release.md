@@ -13,10 +13,10 @@ JAVA_HOME=$PWD/.jdk/jdk17 ./gradlew testDebugUnitTest assembleDebug assembleRele
 ## Current Build Outputs
 
 - Debug APK: `app/build/outputs/apk/debug/app-debug.apk`
-- Unsigned release APK, when signing env vars are absent: `app/build/outputs/apk/release/app-release-unsigned.apk`
-- Signed release APK, when signing env vars are present: `app/build/outputs/apk/release/app-release.apk`
+- Unsigned release APK, when signing env vars are absent: `app/build/outputs/apk/release/Tickflow-<versionName>.apk` (unsigned variant produced by `assembleRelease` is named `app-release-unsigned.apk` only if the rename does not run; the configured rename produces `Tickflow-<versionName>.apk`)
+- Signed release APK, when signing env vars are present: `app/build/outputs/apk/release/Tickflow-<versionName>.apk`
 
-The release build stays unsigned by default. This is expected unless production signing environment variables are provided.
+The release build stays unsigned by default. This is expected unless production signing environment variables are provided. Android will refuse to install an unsigned APK with the error "App not installed", so any APK published to GitHub releases must be signed.
 
 ## Signing
 
@@ -37,6 +37,17 @@ Before public or closed testing distribution:
 4. Verify `assembleRelease` produces a signed artifact.
 
 Do not commit keystores, passwords, upload certificates, or Play Console credentials.
+
+### CI release signing (GitHub Actions)
+
+The `Release` workflow (`.github/workflows/release.yml`) builds the release APK, signs it, and attaches it to a GitHub release. It picks signing material from the following repository secrets:
+
+- `RELEASE_KEYSTORE_BASE64` — the keystore file, base64 encoded (`base64 -w0 upload-keystore.jks`)
+- `RELEASE_KEYSTORE_PASSWORD`
+- `RELEASE_KEY_ALIAS`
+- `RELEASE_KEY_PASSWORD`
+
+If `RELEASE_KEYSTORE_BASE64` is not set, the workflow falls back to generating an ephemeral keystore so the published APK is at least installable. The signature will differ between releases in that mode, which means users have to uninstall the previous build before installing a new one. Set the secrets above for a stable signature across releases.
 
 Local Robolectric tests are pinned to SDK 35 in `app/src/test/resources/robolectric.properties`; the production app still compiles and targets SDK 36.
 
