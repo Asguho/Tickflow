@@ -28,10 +28,17 @@ class TrackingNotificationFactoryTest {
 
         val notificationManager = context.getSystemService(NotificationManager::class.java)
         val channel = notificationManager.getNotificationChannel(TrackingNotificationFactory.CHANNEL_ID)
+        val targetCompleteChannel =
+            notificationManager.getNotificationChannel(TrackingNotificationFactory.TARGET_COMPLETE_CHANNEL_ID)
 
         assertNotNull(channel)
         assertEquals(context.getString(R.string.tracking_channel_name), channel.name)
         assertEquals(NotificationManager.IMPORTANCE_LOW, channel.importance)
+        assertNotNull(targetCompleteChannel)
+        assertEquals(context.getString(R.string.target_complete_channel_name), targetCompleteChannel.name)
+        assertEquals(NotificationManager.IMPORTANCE_DEFAULT, targetCompleteChannel.importance)
+        assertEquals(null, targetCompleteChannel.sound)
+        assertTrue(targetCompleteChannel.shouldVibrate())
     }
 
     @Test
@@ -55,6 +62,22 @@ class TrackingNotificationFactoryTest {
         assertTrue(notification.flags and Notification.FLAG_ONGOING_EVENT != 0)
         assertEquals(1, notification.actions.size)
         assertEquals("Stop", notification.actions.single().title.toString())
+        assertNotNull(notification.contentIntent)
+    }
+
+    @Test
+    fun targetCompleteNotificationHasNoActions() {
+        val notification = factory.targetCompleteNotification()
+
+        assertEquals(
+            "Workday complete",
+            notification.extras.getString(Notification.EXTRA_TITLE),
+        )
+        assertEquals(
+            "You've reached your target for today.",
+            notification.extras.getString(Notification.EXTRA_TEXT),
+        )
+        assertEquals(0, notification.actions?.size ?: 0)
         assertNotNull(notification.contentIntent)
     }
 }

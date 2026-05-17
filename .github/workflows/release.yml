@@ -70,6 +70,12 @@ jobs:
           BUILD_TOOLS=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -n1)
           "$BUILD_TOOLS/apksigner" verify --print-certs "$APK"
 
+      - name: Normalize release asset name
+        run: |
+          set -euo pipefail
+          APK=$(ls app/build/outputs/apk/release/*.apk | head -n1)
+          cp "$APK" "app/build/outputs/apk/release/Tickflow-${{ inputs.tag }}.apk"
+
       - name: Create GitHub release
         uses: softprops/action-gh-release@v3
         with:

@@ -2,4 +2,6 @@
     <string name="app_name">Tickflow</string>
     <string name="tracking_channel_name">Active work tracking</string>
     <string name="tracking_channel_description">Shows active Tickflow work tracking status.</string>
+    <string name="target_complete_channel_name">Workday complete</string>
+    <string name="target_complete_channel_description">Quiet reminder when your work target is reached.</string>
 </resources>

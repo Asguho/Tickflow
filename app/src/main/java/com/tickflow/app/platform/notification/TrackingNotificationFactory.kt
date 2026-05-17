@@ -33,6 +33,19 @@ class TrackingNotificationFactory @Inject constructor(
                 description = context.getString(R.string.tracking_channel_description)
             }
             NotificationManagerCompat.from(context).createNotificationChannel(channel)
+
+            val targetCompleteChannel = NotificationChannel(
+                TARGET_COMPLETE_CHANNEL_ID,
+                context.getString(R.string.target_complete_channel_name),
+                NotificationManager.IMPORTANCE_DEFAULT,
+            ).apply {
+                description = context.getString(R.string.target_complete_channel_description)
+                setSound(null, null)
+                enableVibration(true)
+                vibrationPattern = TARGET_COMPLETE_VIBRATION_PATTERN
+                setBypassDnd(false)
+            }
+            NotificationManagerCompat.from(context).createNotificationChannel(targetCompleteChannel)
         }
     }
 
@@ -66,6 +79,26 @@ class TrackingNotificationFactory @Inject constructor(
             .build()
     }
 
+    fun targetCompleteNotification(): Notification {
+        val contentIntent = PendingIntent.getActivity(
+            context,
+            12,
+            Intent(context, MainActivity::class.java),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+
+        return NotificationCompat.Builder(context, TARGET_COMPLETE_CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setContentTitle("Workday complete")
+            .setContentText("You've reached your target for today.")
+            .setCategory(NotificationCompat.CATEGORY_REMINDER)
+            .setAutoCancel(true)
+            .setOnlyAlertOnce(true)
+            .setVibrate(TARGET_COMPLETE_VIBRATION_PATTERN)
+            .setContentIntent(contentIntent)
+            .build()
+    }
+
     private fun formatMinutes(minutes: Long): String {
         val hours = minutes / 60
         val remainder = minutes % 60
@@ -74,6 +107,9 @@ class TrackingNotificationFactory @Inject constructor(
 
     companion object {
         const val CHANNEL_ID = "active_tracking"
+        const val TARGET_COMPLETE_CHANNEL_ID = "target_complete"
         const val NOTIFICATION_ID = 1001
+        const val TARGET_COMPLETE_NOTIFICATION_ID = 1002
+        private val TARGET_COMPLETE_VIBRATION_PATTERN = longArrayOf(0, 120, 80, 120)
     }
 }
