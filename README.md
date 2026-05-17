@@ -5,7 +5,8 @@ Tickflow is a privacy-first Android workday assistant that tracks time from the 
 It is built for people who want an accurate workday total without managing a timer all day. When you arrive at the office, Tickflow can start tracking from the configured Wi-Fi connection. When you leave, it stops. If you step out and return, Tickflow can surface the gap so you can mark it as work with one tap. Your carry-over balance and predicted remaining time adjust from the sessions stored on your device.
 
 <p align="center">
-  <img src="docs/assets/tickflow-pixel.png" alt="Tickflow home screen on a Pixel device showing daily progress, gap review, target time, and carry-over." width="320">
+  <img src="docs/assets/tickflow-screen-1.png" alt="Tickflow app screen on a Pixel device." width="280">
+  <img src="docs/assets/tickflow-screen-2.png" alt="Tickflow app screen on a Pixel device." width="280">
 </p>
 
 ## What It Does

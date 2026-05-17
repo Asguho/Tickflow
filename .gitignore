@@ -1,7 +1,10 @@
 .gradle/
+.gradle-home/
 build/
 **/build/
 local.properties
 .android-sdk/
+.android-commandlinetools.zip
+.jdk17.tar.gz
 .jdk/
 .kotlin/

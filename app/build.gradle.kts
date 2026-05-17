@@ -88,14 +88,6 @@ android {
     }
 }
 
-androidComponents {
-    onVariants(selector().withBuildType("release")) { variant ->
-        variant.outputs.forEach { output ->
-            output.outputFileName.set("Tickflow-$appVersionName.apk")
-        }
-    }
-}
-
 ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
 }
