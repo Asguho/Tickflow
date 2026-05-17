@@ -69,7 +69,7 @@ Build outputs:
 
 - Debug APK: `app/build/outputs/apk/debug/app-debug.apk`
 - Unsigned release APK: `app/build/outputs/apk/release/app-release-unsigned.apk`
-- Signed release APK, when signing environment variables are present: `app/build/outputs/apk/release/app-release.apk`
+- Signed release APK, when signing environment variables are present: `app/build/outputs/apk/release/Tickflow-<versionName>.apk`
 
 Release signing is optional and environment-variable driven. See [docs/release.md](docs/release.md).
 
