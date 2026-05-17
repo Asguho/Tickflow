@@ -1,11 +1,14 @@
 name: Release
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       tag:
         description: Release tag, for example v0.1.0
-        required: true
+        required: false
         type: string
 
 permissions:
@@ -26,6 +29,29 @@ jobs:
           java-version: 17
           cache: gradle
 
+      - name: Resolve release metadata
+        env:
+          MANUAL_TAG: ${{ github.event.inputs.tag || '' }}
+        run: |
+          set -euo pipefail
+          APP_VERSION=$(sed -n 's/^val appVersionName = "\(.*\)"$/\1/p' app/build.gradle.kts)
+          if [ -z "$APP_VERSION" ]; then
+            echo "::error::Could not read appVersionName from app/build.gradle.kts"
+            exit 1
+          fi
+
+          if [ -n "${MANUAL_TAG:-}" ]; then
+            RELEASE_TAG="$MANUAL_TAG"
+          else
+            RELEASE_TAG="v${APP_VERSION}-build.${GITHUB_RUN_NUMBER}"
+          fi
+          RELEASE_ASSET_NAME="Tickflow-${RELEASE_TAG//\//-}.apk"
+
+          {
+            echo "TICKFLOW_RELEASE_TAG=$RELEASE_TAG"
+            echo "TICKFLOW_RELEASE_ASSET_NAME=$RELEASE_ASSET_NAME"
+          } >> "$GITHUB_ENV"
+
       - name: Prepare signing keystore
         env:
           KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
@@ -34,15 +60,9 @@ jobs:
           KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
         run: |
           set -euo pipefail
+          umask 077
           KEYSTORE_PATH="$RUNNER_TEMP/release.keystore"
-          if [ -n "${KEYSTORE_BASE64:-}" ]; then
-            echo "Using release keystore from repository secrets."
-            echo "$KEYSTORE_BASE64" | base64 -d > "$KEYSTORE_PATH"
-            STORE_PW="$KEYSTORE_PASSWORD"
-            ALIAS="$KEY_ALIAS"
-            KEY_PW="$KEY_PASSWORD"
-          else
-            echo "::warning::No RELEASE_KEYSTORE_BASE64 secret set; generating an ephemeral keystore for this release. Users will need to uninstall any previous build before installing a release signed with a different key. Set the RELEASE_KEYSTORE_BASE64/PASSWORD/ALIAS/KEY_PASSWORD secrets to get a stable signature across releases."
+          use_generated_keystore() {
             STORE_PW="tickflow"
             ALIAS="tickflow"
             KEY_PW="tickflow"
@@ -51,7 +71,37 @@ jobs:
               -alias "$ALIAS" \
               -keyalg RSA -keysize 2048 -validity 36500 \
               -storepass "$STORE_PW" -keypass "$KEY_PW" \
-              -dname "CN=Tickflow, OU=Tickflow, O=Tickflow, L=, ST=, C=US"
+              -dname "CN=Tickflow, OU=CI, O=Tickflow, L=Copenhagen, ST=Capital Region, C=DK"
+          }
+
+          if [ -n "${KEYSTORE_BASE64:-}" ] &&
+             [ -n "${KEYSTORE_PASSWORD:-}" ] &&
+             [ -n "${KEY_ALIAS:-}" ] &&
+             [ -n "${KEY_PASSWORD:-}" ]; then
+            echo "Validating release keystore from repository secrets."
+            if printf '%s' "$KEYSTORE_BASE64" | tr -d '\n\r\t ' | base64 --decode > "$KEYSTORE_PATH" &&
+               keytool -list \
+                 -keystore "$KEYSTORE_PATH" \
+                 -storepass "$KEYSTORE_PASSWORD" \
+                 -alias "$KEY_ALIAS" >/dev/null 2>&1 &&
+               keytool -certreq \
+                 -keystore "$KEYSTORE_PATH" \
+                 -storepass "$KEYSTORE_PASSWORD" \
+                 -alias "$KEY_ALIAS" \
+                 -keypass "$KEY_PASSWORD" \
+                 -file "$RUNNER_TEMP/release-key.csr" >/dev/null 2>&1; then
+              echo "Using validated release keystore from repository secrets."
+              STORE_PW="$KEYSTORE_PASSWORD"
+              ALIAS="$KEY_ALIAS"
+              KEY_PW="$KEY_PASSWORD"
+            else
+              echo "::warning::Release signing secrets are present but could not be validated. Check RELEASE_KEYSTORE_BASE64, RELEASE_KEYSTORE_PASSWORD, RELEASE_KEY_ALIAS, and RELEASE_KEY_PASSWORD. Generating an ephemeral keystore so the release workflow can finish."
+              rm -f "$KEYSTORE_PATH" "$RUNNER_TEMP/release-key.csr"
+              use_generated_keystore
+            fi
+          else
+            echo "::warning::Release signing secrets are incomplete or not set; generating an ephemeral keystore. Users will need to uninstall any previous build before installing a release signed with a different key."
+            use_generated_keystore
           fi
           {
             echo "TICKFLOW_RELEASE_KEYSTORE=$KEYSTORE_PATH"
@@ -74,13 +124,13 @@ jobs:
         run: |
           set -euo pipefail
           APK=$(ls app/build/outputs/apk/release/*.apk | head -n1)
-          cp "$APK" "app/build/outputs/apk/release/Tickflow-${{ inputs.tag }}.apk"
+          cp "$APK" "app/build/outputs/apk/release/$TICKFLOW_RELEASE_ASSET_NAME"
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v3
         with:
-          tag_name: ${{ inputs.tag }}
+          tag_name: ${{ env.TICKFLOW_RELEASE_TAG }}
           target_commitish: ${{ github.sha }}
           generate_release_notes: true
-          files: app/build/outputs/apk/release/Tickflow-*.apk
+          files: app/build/outputs/apk/release/${{ env.TICKFLOW_RELEASE_ASSET_NAME }}
           fail_on_unmatched_files: true

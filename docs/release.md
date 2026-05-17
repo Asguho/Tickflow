@@ -1,6 +1,6 @@
 # Tickflow Release Notes
 
-Last updated: 2026-05-11
+Last updated: 2026-05-17
 
 ## Build Commands
 
@@ -40,14 +40,16 @@ Do not commit keystores, passwords, upload certificates, or Play Console credent
 
 ### CI release signing (GitHub Actions)
 
-The `Release` workflow (`.github/workflows/release.yml`) builds the release APK, signs it, and attaches it to a GitHub release. It picks signing material from the following repository secrets:
+The `Release` workflow (`.github/workflows/release.yml`) runs on manual dispatch and on every push to `main`. It builds the release APK, signs it, and attaches it to a GitHub release. Manual runs can provide an explicit tag; push-triggered runs use `v<appVersionName>-build.<github-run-number>`.
+
+The workflow picks signing material from the following repository secrets:
 
 - `RELEASE_KEYSTORE_BASE64` — the keystore file, base64 encoded (`base64 -w0 upload-keystore.jks`)
 - `RELEASE_KEYSTORE_PASSWORD`
 - `RELEASE_KEY_ALIAS`
 - `RELEASE_KEY_PASSWORD`
 
-If `RELEASE_KEYSTORE_BASE64` is not set, the workflow falls back to generating an ephemeral keystore so the published APK is at least installable. The signature will differ between releases in that mode, which means users have to uninstall the previous build before installing a new one. Set the secrets above for a stable signature across releases.
+The workflow validates the keystore, alias, store password, and key password before Gradle runs. If the secrets are incomplete or cannot be validated, it falls back to generating an ephemeral keystore so the published APK is at least installable. The signature will differ between releases in that mode, which means users have to uninstall the previous build before installing a new one. Set valid secrets above for a stable signature across releases.
 
 Local Robolectric tests are pinned to SDK 35 in `app/src/test/resources/robolectric.properties`; the production app still compiles and targets SDK 36.
 
