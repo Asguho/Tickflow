@@ -6,9 +6,7 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.os.Build
-import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
+import android.graphics.drawable.Icon
 import com.tickflow.app.MainActivity
 import com.tickflow.app.R
 import com.tickflow.app.core.model.WorkSession
@@ -23,21 +21,35 @@ import javax.inject.Singleton
 class TrackingNotificationFactory @Inject constructor(
     @param:ApplicationContext private val context: Context,
 ) {
+    private val notificationManager: NotificationManager =
+        context.getSystemService(NotificationManager::class.java)
+
     fun ensureChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                CHANNEL_ID,
-                context.getString(R.string.tracking_channel_name),
-                NotificationManager.IMPORTANCE_LOW,
-            ).apply {
-                description = context.getString(R.string.tracking_channel_description)
-            }
-            NotificationManagerCompat.from(context).createNotificationChannel(channel)
+        val channel = NotificationChannel(
+            CHANNEL_ID,
+            context.getString(R.string.tracking_channel_name),
+            NotificationManager.IMPORTANCE_LOW,
+        ).apply {
+            description = context.getString(R.string.tracking_channel_description)
         }
+        notificationManager.createNotificationChannel(channel)
     }
 
-    fun activeTrackingNotification(session: WorkSession, now: Instant): Notification {
-        val workedMinutes = Duration.between(session.start, now).toMinutes().coerceAtLeast(0)
+    fun activeTrackingNotification(
+        session: WorkSession,
+        now: Instant,
+        targetMinutes: Int,
+    ): Notification {
+        val safeTarget = targetMinutes.coerceAtLeast(1)
+        val workedMinutes = Duration.between(session.start, now).toMinutes()
+            .coerceAtLeast(0)
+            .toInt()
+        val progressPercent = ((workedMinutes.toLong() * 100L) / safeTarget)
+            .coerceIn(0L, 100L)
+            .toInt()
+        val remainingMinutes = (safeTarget - workedMinutes).coerceAtLeast(0)
+        val targetReached = workedMinutes >= safeTarget
+
         val stopIntent = PendingIntent.getService(
             context,
             10,
@@ -51,17 +63,30 @@ class TrackingNotificationFactory @Inject constructor(
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
 
-        return NotificationCompat.Builder(context, CHANNEL_ID)
+        val trackerIcon = Icon.createWithResource(context, R.drawable.ic_launcher_foreground)
+        val progressStyle = Notification.ProgressStyle()
+            .setProgress(progressPercent)
+            .setProgressTrackerIcon(trackerIcon)
+
+        val subText = if (targetReached) "Target reached" else "${formatMinutes(remainingMinutes.toLong())} to go"
+
+        return Notification.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle("Tickflow tracking workday")
-            .setContentText("${formatMinutes(workedMinutes)} worked")
+            .setContentText(
+                "${formatMinutes(workedMinutes.toLong())} of ${formatMinutes(safeTarget.toLong())} worked",
+            )
+            .setSubText(subText)
+            .setStyle(progressStyle)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setContentIntent(contentIntent)
             .addAction(
-                R.drawable.ic_launcher_foreground,
-                "Stop",
-                stopIntent,
+                Notification.Action.Builder(
+                    Icon.createWithResource(context, R.drawable.ic_launcher_foreground),
+                    "Stop",
+                    stopIntent,
+                ).build(),
             )
             .build()
     }

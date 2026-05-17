@@ -8,7 +8,6 @@ import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
-import androidx.core.content.ContextCompat
 import com.tickflow.app.domain.repository.SettingsRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.awaitClose
@@ -61,8 +60,7 @@ class AndroidConnectivityObserver @Inject constructor(
 
     @Suppress("DEPRECATION")
     private fun currentWifiInfo(): CurrentWifiInfo? {
-        val hasLocation = ContextCompat.checkSelfPermission(
-            context,
+        val hasLocation = context.checkSelfPermission(
             Manifest.permission.ACCESS_FINE_LOCATION,
         ) == PackageManager.PERMISSION_GRANTED
         if (!hasLocation) return null

@@ -4,10 +4,9 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.os.IBinder
-import androidx.core.app.ServiceCompat
-import androidx.core.content.ContextCompat
 import com.tickflow.app.core.model.SessionSource
 import com.tickflow.app.core.time.ClockProvider
+import com.tickflow.app.domain.repository.SettingsRepository
 import com.tickflow.app.domain.repository.WorkSessionRepository
 import com.tickflow.app.domain.usecase.StartTrackingUseCase
 import com.tickflow.app.domain.usecase.StopTrackingUseCase
@@ -18,6 +17,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -25,6 +25,7 @@ import javax.inject.Inject
 class TrackingForegroundService : Service() {
     @Inject lateinit var clockProvider: ClockProvider
     @Inject lateinit var repository: WorkSessionRepository
+    @Inject lateinit var settingsRepository: SettingsRepository
     @Inject lateinit var startTracking: StartTrackingUseCase
     @Inject lateinit var stopTracking: StopTrackingUseCase
     @Inject lateinit var notificationFactory: TrackingNotificationFactory
@@ -56,9 +57,10 @@ class TrackingForegroundService : Service() {
     private fun handleStart(source: SessionSource) {
         scope.launch {
             val session = startTracking(clockProvider.now(), source)
+            val target = currentTargetMinutes()
             startForeground(
                 TrackingNotificationFactory.NOTIFICATION_ID,
-                notificationFactory.activeTrackingNotification(session, clockProvider.now()),
+                notificationFactory.activeTrackingNotification(session, clockProvider.now(), target),
             )
             maintainNotification()
         }
@@ -67,7 +69,7 @@ class TrackingForegroundService : Service() {
     private fun handleStop() {
         scope.launch {
             stopTracking(clockProvider.now())
-            ServiceCompat.stopForeground(this@TrackingForegroundService, ServiceCompat.STOP_FOREGROUND_REMOVE)
+            stopForeground(STOP_FOREGROUND_REMOVE)
             stopSelf()
         }
     }
@@ -78,9 +80,10 @@ class TrackingForegroundService : Service() {
             if (active == null) {
                 stopSelf()
             } else {
+                val target = currentTargetMinutes()
                 startForeground(
                     TrackingNotificationFactory.NOTIFICATION_ID,
-                    notificationFactory.activeTrackingNotification(active, clockProvider.now()),
+                    notificationFactory.activeTrackingNotification(active, clockProvider.now(), target),
                 )
                 maintainNotification()
             }
@@ -91,15 +94,19 @@ class TrackingForegroundService : Service() {
         scope.launch {
             while (true) {
                 val active = repository.getActiveSession() ?: break
+                val target = currentTargetMinutes()
                 startForeground(
                     TrackingNotificationFactory.NOTIFICATION_ID,
-                    notificationFactory.activeTrackingNotification(active, clockProvider.now()),
+                    notificationFactory.activeTrackingNotification(active, clockProvider.now(), target),
                 )
                 delay(60_000)
             }
             stopSelf()
         }
     }
+
+    private suspend fun currentTargetMinutes(): Int =
+        settingsRepository.settings.first().schedule.dailyTargetMinutes
 
     enum class Action {
         StartManual,
@@ -117,7 +124,7 @@ class TrackingForegroundService : Service() {
 
         fun start(context: Context, action: Action): Boolean {
             return runCatching {
-                ContextCompat.startForegroundService(context, intent(context, action))
+                context.startForegroundService(intent(context, action))
             }.isSuccess
         }
     }

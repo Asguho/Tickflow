@@ -14,7 +14,7 @@ android {
 
     defaultConfig {
         applicationId = "com.tickflow.app"
-        minSdk = 26
+        minSdk = 36
         targetSdk = 36
         versionCode = 1
         versionName = "0.1.0"

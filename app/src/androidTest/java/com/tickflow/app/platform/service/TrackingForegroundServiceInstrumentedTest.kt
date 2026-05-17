@@ -2,7 +2,6 @@ package com.tickflow.app.platform.service
 
 import android.Manifest
 import android.content.Context
-import android.os.Build
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -86,14 +85,12 @@ class TrackingForegroundServiceInstrumentedTest {
         val active = waitForActiveSession()
         assertEquals(SessionSource.Wifi, active.source)
         val notification = waitForNotification("Tickflow tracking workday")
-        assertTrue(notification.contains("2m worked") || notification.contains("1m worked") || notification.contains("0m worked"))
+        assertTrue(notification.contains("of 8h 0m worked"))
         assertTrue(serviceDump().contains("isForeground=true"))
     }
 
     private fun grantNotificationPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            device.executeShellCommand("pm grant ${context.packageName} ${Manifest.permission.POST_NOTIFICATIONS}")
-        }
+        device.executeShellCommand("pm grant ${context.packageName} ${Manifest.permission.POST_NOTIFICATIONS}")
     }
 
     private fun launchApp() {

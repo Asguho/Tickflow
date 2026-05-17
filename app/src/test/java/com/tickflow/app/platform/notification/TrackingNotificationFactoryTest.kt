@@ -17,7 +17,7 @@ import org.robolectric.annotation.Config
 import java.time.Instant
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
+@Config(sdk = [36])
 class TrackingNotificationFactoryTest {
     private val context = ApplicationProvider.getApplicationContext<Context>()
     private val factory = TrackingNotificationFactory(context)
@@ -42,6 +42,7 @@ class TrackingNotificationFactoryTest {
                 source = SessionSource.Manual,
             ),
             now = Instant.parse("2026-05-11T14:23:00Z"),
+            targetMinutes = 8 * 60,
         )
 
         assertEquals(
@@ -49,7 +50,7 @@ class TrackingNotificationFactoryTest {
             notification.extras.getString(Notification.EXTRA_TITLE),
         )
         assertEquals(
-            "6h 23m worked",
+            "6h 23m of 8h 0m worked",
             notification.extras.getString(Notification.EXTRA_TEXT),
         )
         assertTrue(notification.flags and Notification.FLAG_ONGOING_EVENT != 0)
